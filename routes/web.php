@@ -14,5 +14,5 @@
 */
 
 $router->get('/', function () use ($router) {
-    return "hello lumen";
+    return "Welcome to bombigo website!";
 });
