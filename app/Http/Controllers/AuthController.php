@@ -44,7 +44,7 @@ class AuthController extends Controller
     public function me()
     {
         $user = Auth::user();        
-        return response()->json($user);
+        return response()->json(["success" => true, "user" => $user]);
     }
 
     public function logout()
@@ -65,7 +65,7 @@ class AuthController extends Controller
             "access_token" => $token,
             "token_type" => "bearer",
             "expires_in" => Auth::factory()->getTTL() * 60
-        ]);
+        ], 200);
     }
 
     public function changePassword(Request $request)

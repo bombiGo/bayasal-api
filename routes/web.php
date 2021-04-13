@@ -17,5 +17,9 @@ $router->group(["prefix" => "api"], function () use ($router) {
         // $router->post("update-user", "AuthController@updateUser");
     
         $router->get("users", "UserController@index");
+
+        // Info 
+        $router->get("info-categories", "InfoCategoryController@index");
+        $router->post("info-categories", "InfoCategoryController@store");
     });
 });
