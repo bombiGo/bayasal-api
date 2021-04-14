@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\InfoCategory;
 
+use Storage;
+
 class InfoCategoryController extends Controller
 {
     public function index()
@@ -15,11 +17,16 @@ class InfoCategoryController extends Controller
 
     public function store(Request $request)
     {
-        $this->validate($request, [
+        $rules = [
             "type" => "required",
-            "name" => "required|unique:info_categories,name",
-            "image" => "nullable|image"
-        ]);
+            "name" => "required|unique:info_categories,name"
+        ];
+
+        if ($request->hasFile("image")) {
+            $rules["image"] = "image|max:2048";
+        }
+
+        $this->validate($request, $rules);
            
         $category = new InfoCategory; 
 
@@ -43,10 +50,16 @@ class InfoCategoryController extends Controller
 
     public function update(Request $request, $id)
     {
-        $request->validate([
-            "name" => "required|unique:info_categories,name," . $id,
-            "image" => "nullable|image"
-        ]);
+        $rules = [
+            "type" => "required",
+            "name" => "required|unique:info_categories,name," . $id
+        ];
+
+        if ($request->hasFile("image")) {
+            $rules["image"] = "image|max:2048";
+        }
+
+        $this->validate($request, $rules);
         
         $category = InfoCategory::findOrFail($id);
 
@@ -57,24 +70,19 @@ class InfoCategoryController extends Controller
             $category->image = Storage::disk("s3")->url($image_path);
         }
 
-        $category->name = $request->name;
+        $category->type = $request->input("type");
+        $category->name = $request->input("name");
         $category->save();
 
-        return redirect()->route("info-categories.index")->with("success", "Info category updated successfully");
+        return response()->json(["success" => true, "message" => "Info category updated"]);
     }
 
-    public function destroy(Request $request, $id)
+    public function destroy($id)
     {
-        if ($request->ajax()) {
-            $category = InfoCategory::findOrFail($id);
-
-            deleteImageForSingle($category->logo);
-            $category->infos()->detach();
-            
-            $category->delete();
-
-            Session::flash("success", "Info category deleted successfully");
-            return response()->json(["success" => true]);
-        }
+        $category = InfoCategory::findOrFail($id);
+        deleteImageForSingle($category->image);
+        // $category->infos()->detach();
+        $category->delete();
+        return response()->json(["success" => true, "message" => "Info category deleted"]);
     }
 }

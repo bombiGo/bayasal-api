@@ -21,7 +21,7 @@ function convertBase64ToImageSrc($content, $folder = null) {
             $mime_type = $groups["mime"];
             
             // Generating a random filename
-            $image_path = $folder."/".\Str::random(40).".".$mime_type;
+            $image_path = $folder."/".\str_random(40).".".$mime_type;
 
             // Create file_content
             // $file_content = file_get_contents($src);
@@ -103,6 +103,16 @@ function deleteImageFromUpdateEditor($old_content, $current_content)
             } 
         }
     }
+}
+
+function str_random($length = 40) {
+    $characters = '-0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    $charactersLength = strlen($characters);
+    $randomString = '';
+    for ($i = 0; $i < $length; $i++) {
+        $randomString .= $characters[rand(0, $charactersLength - 1)];
+    }
+    return $randomString;
 }
 
 ?>

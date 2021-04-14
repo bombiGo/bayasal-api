@@ -19,7 +19,17 @@ $router->group(["prefix" => "api"], function () use ($router) {
         $router->get("users", "UserController@index");
 
         // Info 
+        $router->get("infos", "InfoController@index");
+        $router->post("infos", "InfoController@store");
+        $router->get("infos/{id}/edit", "InfoController@edit");
+        // $router->post("info-categories/{id}/update", "InfoCategoryController@update");
+        // $router->delete("info-categories/{id}", "InfoCategoryController@destroy");
+        
+        // Info category
         $router->get("info-categories", "InfoCategoryController@index");
         $router->post("info-categories", "InfoCategoryController@store");
+        $router->get("info-categories/{id}/edit", "InfoCategoryController@edit");
+        $router->post("info-categories/{id}/update", "InfoCategoryController@update");
+        $router->delete("info-categories/{id}", "InfoCategoryController@destroy");
     });
 });

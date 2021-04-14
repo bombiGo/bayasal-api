@@ -16,7 +16,7 @@ class CreateInfosTabe extends Migration
         Schema::create('infos', function (Blueprint $table) {
             $table->id();
             $table->string("title");
-            $table->string("subtitle")->nullable();
+            $table->text("subtitle")->nullable();
             $table->string("image")->nullable();
             $table->boolean("is_featured")->default(0);
             $table->longText("content")->nullable();
