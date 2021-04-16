@@ -22,8 +22,8 @@ $router->group(["prefix" => "api"], function () use ($router) {
         $router->get("infos", "InfoController@index");
         $router->post("infos", "InfoController@store");
         $router->get("infos/{id}/edit", "InfoController@edit");
-        // $router->post("info-categories/{id}/update", "InfoCategoryController@update");
-        // $router->delete("info-categories/{id}", "InfoCategoryController@destroy");
+        $router->post("infos/{id}/update", "InfoController@update");
+        $router->delete("infos/{id}", "InfoController@destroy");
         
         // Info category
         $router->get("info-categories", "InfoCategoryController@index");
@@ -31,5 +31,27 @@ $router->group(["prefix" => "api"], function () use ($router) {
         $router->get("info-categories/{id}/edit", "InfoCategoryController@edit");
         $router->post("info-categories/{id}/update", "InfoCategoryController@update");
         $router->delete("info-categories/{id}", "InfoCategoryController@destroy");
+
+        // Info 
+        $router->get("recipes", "RecipeController@index");
+        $router->post("recipes", "RecipeController@store");
+        $router->get("recipes/{id}/edit", "RecipeController@edit");
+        $router->post("recipes/{id}/update", "RecipeController@update");
+        $router->delete("recipes/{id}", "RecipeController@destroy");
+        
+        // Recipe category
+        $router->get("recipe-categories", "RecipeCategoryController@index");
+        $router->post("recipe-categories", "RecipeCategoryController@store");
+        $router->get("recipe-categories/{id}/edit", "RecipeCategoryController@edit");
+        $router->post("recipe-categories/{id}/update", "RecipeCategoryController@update");
+        $router->delete("recipe-categories/{id}", "RecipeCategoryController@destroy");
+
+        // Course
+        $router->get("courses", "CourseController@index");
+        $router->post("courses", "CourseController@store");
+        // $router->get("recipes/{id}/edit", "RecipeController@edit");
+        // $router->post("recipes/{id}/update", "RecipeController@update");
+        // $router->delete("recipes/{id}", "RecipeController@destroy");
+
     });
 });

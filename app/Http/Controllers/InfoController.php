@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Info;
+use App\Models\InfoCategory;
 
 use Storage;
 
@@ -11,7 +12,7 @@ class InfoController extends Controller
 {
     public function index()
     {
-        $infos = Info::all();
+        $infos = Info::with("categories")->get();
         return response()->json($infos);
     }
 
@@ -19,7 +20,7 @@ class InfoController extends Controller
     {
         $rules = [
             "title" => "required|unique:infos,title|max:255",
-            "subtitle" => "required|max:255",
+            "subtitle" => "required|max:1000",
             "is_featured" => "required|boolean",
             "content" => "required"
         ];
@@ -50,20 +51,27 @@ class InfoController extends Controller
         $info->content = $content;
         $info->save();
 
+        if ($request->input("categories_id")) {
+            $categories_id = explode(",", $request->input("categories_id"));
+            $info->categories()->attach($categories_id);
+        }
+
         return response()->json(["success" => true, "message" => "Info added"]);
     }
 
     public function edit($id)
     {
         $info = Info::findOrFail($id);
-        return response()->json(["success" => true, "data" => $info]);
+        $info["categories"] = $info->categories;
+        $categories = InfoCategory::all();
+        return response()->json(["success" => true, "info" => $info, "categories" => $categories]);
     }
 
     public function update(Request $request, $id)
     {
         $rules = [
             "title" => "required|max:255|unique:infos,title," . $id,
-            "subtitle" => "required|max:255",
+            "subtitle" => "required|max:1000",
             "is_featured" => "required|boolean",
             "content" => "required"
         ];
@@ -89,6 +97,13 @@ class InfoController extends Controller
         $info->content = $request->input("content");
         $info->save();
 
+        $categories_id = [];
+        if ($request->input("categories_id")) {
+            $categories_id = explode(",", $request->input("categories_id"));
+        } 
+
+        $info->categories()->sync($categories_id);
+
         return response()->json(["success" => true, "message" => "Info updated"]);
     }
 
@@ -96,7 +111,7 @@ class InfoController extends Controller
     {
         $info = Info::findOrFail($id);
         deleteImageForSingle($info->image);
-        $info->categories()->delete();
+        $info->categories()->detach();
         $info->delete();
         
         return response()->json(["success" => true, "message" => "Info deleted"]);

@@ -3,56 +3,53 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\InfoCategory;
+use App\Models\RecipeCategory;
 
 use Storage;
 
-class InfoCategoryController extends Controller
+class RecipeCategoryController extends Controller
 {
     public function index()
     {
-        $categories = InfoCategory::all();
+        $categories = RecipeCategory::all();
         return response()->json($categories);
     }
 
     public function store(Request $request)
     {
         $rules = [
-            "type" => "required",
-            "name" => "required|unique:info_categories,name"
+            "name" => "required|unique:recipe_categories,name"
         ];
 
         if ($request->hasFile("image")) {
-            $rules["image"] = "image|max:2048";
+            $rules["image"] = "image|max:512";
         }
 
         $this->validate($request, $rules);
            
-        $category = new InfoCategory; 
+        $category = new RecipeCategory; 
 
         if ($request->hasFile("image")) {
-            $image_path = $request->file("image")->store("info-categories", "s3");
+            $image_path = $request->file("image")->store("recipe-categories", "s3");
             $category->image = Storage::disk("s3")->url($image_path);
         }
 
-        $category->type = $request->input("type");
         $category->name = $request->input("name");
         $category->save();
 
-        return response()->json(["success" => true, "message" => "Info category added"]);
+        return response()->json(["success" => true, "message" => "Recipe category added"]);
     }
 
     public function edit($id)
     {
-        $category = InfoCategory::findOrFail($id);
+        $category = RecipeCategory::findOrFail($id);
         return response()->json(["success" => true, "data" => $category]);
     }
 
     public function update(Request $request, $id)
     {
         $rules = [
-            "type" => "required",
-            "name" => "required|unique:info_categories,name," . $id
+            "name" => "required|unique:recipe_categories,name," . $id
         ];
 
         if ($request->hasFile("image")) {
@@ -61,28 +58,27 @@ class InfoCategoryController extends Controller
 
         $this->validate($request, $rules);
         
-        $category = InfoCategory::findOrFail($id);
+        $category = RecipeCategory::findOrFail($id);
 
         if ($request->hasFile("image")) {
             deleteImageForSingle($category->image);
             
-            $image_path = $request->file("image")->store("info-categories", "s3");
+            $image_path = $request->file("image")->store("recipe-categories", "s3");
             $category->image = Storage::disk("s3")->url($image_path);
         }
 
-        $category->type = $request->input("type");
         $category->name = $request->input("name");
         $category->save();
 
-        return response()->json(["success" => true, "message" => "Info category updated"]);
+        return response()->json(["success" => true, "message" => "Recipe category updated"]);
     }
 
     public function destroy($id)
     {
-        $category = InfoCategory::findOrFail($id);
+        $category = RecipeCategory::findOrFail($id);
         deleteImageForSingle($category->image);
-        $category->infos()->detach();
+        $category->recipes()->detach();
         $category->delete();
-        return response()->json(["success" => true, "message" => "Info category deleted"]);
+        return response()->json(["success" => true, "message" => "Recipe category deleted"]);
     }
 }
