@@ -11,7 +11,7 @@ class CourseController extends Controller
 {
     public function index()
     {
-        $courses = Course::all();
+        $courses = Course::with("lessons")->get();
         return response()->json($courses);
     }
 
@@ -57,19 +57,26 @@ class CourseController extends Controller
         return response()->json(["success" => true, "message" => "Course added"]);
     }
 
+    public function show($id)
+    {
+        $course = Course::with("lessons")->findOrFail($id);
+        return response()->json(["success" => true, "course" => $course]);
+    }
+
     public function edit($id)
     {
-        $recipe = Recipe::findOrFail($id);
-        $recipe["categories"] = $recipe->categories;
-        $categories = RecipeCategory::all();
-        return response()->json(["success" => true, "recipe" => $recipe, "categories" => $categories]);
+        $course = Course::findOrFail($id);
+        return response()->json(["success" => true, "course" => $course]);
     }
 
     public function update(Request $request, $id)
     {
         $rules = [
-            "name" => "required|max:255|unique:recipes,name," . $id,
-            "subtitle" => "required|max:1000",
+            "title" => "required|max:255|unique:courses,title," . $id,
+            "price" => "required|integer",
+            "is_paid" => "required|boolean",
+            "day" => "required|integer",
+            "day_title" => "required",
             "content" => "required"
         ];
 
@@ -79,37 +86,39 @@ class CourseController extends Controller
 
         $this->validate($request, $rules);
         
-        $recipe = Recipe::findOrFail($id);
+        $course = Course::findOrFail($id);
 
         if ($request->hasFile("image")) {
-            deleteImageForSingle($recipe->image);
+            deleteImageForSingle($course->image);
             
-            $image_path = $request->file("image")->store("recipes", "s3");
-            $recipe->image = Storage::disk("s3")->url($image_path);
+            $image_path = $request->file("image")->store("courses", "s3");
+            $course->image = Storage::disk("s3")->url($image_path);
         }
 
-        $recipe->name = $request->input("name");
-        $recipe->subtitle = $request->input("subtitle");
-        $recipe->content = $request->input("content");
-        $recipe->save();
+        if (!empty($request->input("content"))) {
+            $data = convertBase64ToImageSrc($request->input("content"), "courses");
+            $content = $data->saveHTML();
+        } else {
+            $content = "";
+        }
 
-        $categories_id = [];
-        if ($request->input("categories_id")) {
-            $categories_id = explode(",", $request->input("categories_id"));
-        } 
+        $course->title = $request->input("title");
+        $course->price = $request->input("price");
+        $course->is_paid = $request->input("is_paid");
+        $course->day = $request->input("day");
+        $course->day_title = $request->input("day_title");
+        $course->content = $content;
+        $course->save();
 
-        $recipe->categories()->sync($categories_id);
-
-        return response()->json(["success" => true, "message" => "Recipe updated"]);
+        return response()->json(["success" => true, "message" => "Course updated"]);
     }
 
     public function destroy($id)
     {
-        $recipe = Recipe::findOrFail($id);
-        deleteImageForSingle($recipe->image);
-        $recipe->categories()->detach();
-        $recipe->delete();
+        $course = Course::findOrFail($id);
+        deleteImageForSingle($course->image);
+        $course->delete();
         
-        return response()->json(["success" => true, "message" => "Recipe deleted"]);
+        return response()->json(["success" => true, "message" => "Course deleted"]);
     }
 }

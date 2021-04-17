@@ -88,9 +88,16 @@ class RecipeController extends Controller
             $recipe->image = Storage::disk("s3")->url($image_path);
         }
 
+        if (!empty($request->input("content"))) {
+            $data = convertBase64ToImageSrc($request->input("content"), "recipes");
+            $content = $data->saveHTML();
+        } else {
+            $content = "";
+        }
+
         $recipe->name = $request->input("name");
         $recipe->subtitle = $request->input("subtitle");
-        $recipe->content = $request->input("content");
+        $recipe->content = $content;
         $recipe->save();
 
         $categories_id = [];

@@ -49,9 +49,13 @@ $router->group(["prefix" => "api"], function () use ($router) {
         // Course
         $router->get("courses", "CourseController@index");
         $router->post("courses", "CourseController@store");
-        // $router->get("recipes/{id}/edit", "RecipeController@edit");
-        // $router->post("recipes/{id}/update", "RecipeController@update");
-        // $router->delete("recipes/{id}", "RecipeController@destroy");
+        $router->get("courses/{id}", "CourseController@show");
+        $router->get("courses/{id}/edit", "CourseController@edit");
+        $router->post("courses/{id}/update", "CourseController@update");
+        $router->delete("courses/{id}", "CourseController@destroy");
 
+        // Lesson 
+        $router->post("lessons/{id}", "LessonController@store");
+        
     });
 });
