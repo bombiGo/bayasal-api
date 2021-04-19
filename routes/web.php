@@ -1,8 +1,12 @@
 <?php
 
 $router->get("/", function () use ($router) {
-    return $router->app->version();
+    return view("index");
 });
+
+$router->get("/image", "UserController@getImage");
+
+$router->post("/upload", "UserController@upload");
 
 $router->group(["prefix" => "api"], function () use ($router) {
     // Guest 
@@ -56,6 +60,8 @@ $router->group(["prefix" => "api"], function () use ($router) {
 
         // Lesson 
         $router->post("lessons/{id}", "LessonController@store");
-        
+        $router->get("lessons/{id}", "LessonController@edit");
+        $router->post("lessons/{id}/update", "LessonController@update");
+        $router->delete("lessons/{id}", "LessonController@destroy");
     });
 });
