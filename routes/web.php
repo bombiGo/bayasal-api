@@ -6,21 +6,37 @@ $router->get("/", function () use ($router) {
 
 $router->get("/image", "UserController@getImage");
 
-$router->post("/upload", "UserController@upload");
+
 
 $router->group(["prefix" => "api"], function () use ($router) {
     // Guest 
     $router->post("register", "AuthController@register");
     $router->post("login", "AuthController@login");
     
-    // Auth 
-    $router->group(["middleware" => "auth"], function () use ($router) {
+    // $router->post("change-password", "AuthController@changePassword");
+    // $router->post("update-user", "AuthController@updateUser");
+    
+    
+
+    $router->group(["middleware" => ["auth"]], function () use ($router) {
+        // Auth 
         $router->get("me", "AuthController@me");
         $router->post("logout", "AuthController@logout");
-        // $router->post("change-password", "AuthController@changePassword");
-        // $router->post("update-user", "AuthController@updateUser");
-    
+    });
+
+    // Web role middleware 
+    $router->group(["middleware" => ["auth", "role"]], function () use ($router) {
+        $router->get("dashboard", "HomeController@dashboard");
+
+        // Editor upload
+        $router->post("editor/upload", "HelperController@uploadEditor");
+
+        // User 
         $router->get("users", "UserController@index");
+        $router->post("users", "UserController@store");
+        $router->get("users/{id}/edit", "UserController@edit");
+        $router->post("users/{id}/update", "UserController@update");
+        $router->delete("users/{id}", "UserController@destroy");
 
         // Info 
         $router->get("infos", "InfoController@index");

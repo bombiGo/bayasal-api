@@ -15,4 +15,9 @@ class Course extends Model
     {
     	return $this->hasMany(Lesson::class, "course_id")->orderBy("day");
     }
+
+    public function thumbnail()
+    {
+        return $this->morphOne(Thumbnail::class, "thumbnailable");
+    }
 }

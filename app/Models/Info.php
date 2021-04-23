@@ -15,4 +15,9 @@ class Info extends Model
     {
         return $this->belongsToMany(InfoCategory::class, "info_has_categories", "info_id", "category_id");
     }
+
+    public function thumbnail()
+    {
+        return $this->morphOne(Thumbnail::class, "thumbnailable");
+    }
 }

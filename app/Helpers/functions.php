@@ -1,6 +1,6 @@
 <?php
 
-function convertBase64ToImageSrc($content, $folder = null) {
+function convert_image_src_editor($content, $folder = null) {
     $content = mb_convert_encoding($content, "HTML-ENTITIES", "UTF-8");
     
     libxml_use_internal_errors(true);
@@ -13,32 +13,55 @@ function convertBase64ToImageSrc($content, $folder = null) {
     foreach($images as $img) {
         $src = $img->getAttribute("src");
     
-        // if the img source is "data-url"
-        if(preg_match("/data:image/", $src)) {
+        // if base64
+        if (preg_match("/data:image/", $src)) {
 
             // get the mimetype
             preg_match("/data:image\/(?<mime>.*?)\;/", $src, $groups);
             $mime_type = $groups["mime"];
             
             // Generating a random filename
-            $image_path = $folder."/".\str_random(40).".".$mime_type;
+            $img_name = $folder."/".\str_random(40).".".$mime_type;
 
             // Create file_content
             // $file_content = file_get_contents($src);
             $file_content = base64_decode(preg_replace("#^data:image/\w+;base64,#i", "", $src));
             
-            // Upload s3 disk
-            Storage::disk("s3")->put($image_path, $file_content, "public");
+            Storage::disk('s3')->put($img_name, $file_content, 'public');
 
             $img->removeAttribute("src");
-            $img->setAttribute("src", Storage::disk("s3")->url($image_path));
+            $img->setAttribute("src", Storage::disk('s3')->url($img_name));
+        } 
+
+        if (str_contains($src, "/temp/")) {
+            if (filter_var($src, FILTER_VALIDATE_URL)) {
+                $file_exists = Storage::disk("s3")->exists(parse_url($src)["path"]);
+                if ($file_exists && !empty($folder)) {
+                    $new_path = $folder . "/" . basename($src);
+
+                    Storage::disk("s3")->move(parse_url($src)["path"], $new_path);
+                    $url = Storage::disk("s3")->url($new_path);
+
+                    $img->removeAttribute("src");
+                    $img->setAttribute("src", $url);
+                }    
+            }
         }
     }    
 
     return $dom;
 }
 
-function deleteImageFromEditor($content)
+
+function delete_one_image($url)
+{
+    $file_exists = Storage::disk("s3")->exists(parse_url($url)["path"]);
+    if ($file_exists) {
+        Storage::disk("s3")->delete(parse_url($url)["path"]);
+    }
+}
+
+function delete_all_image_editor($content)
 {
     if (!empty($content)) {
         libxml_use_internal_errors(true);
@@ -62,15 +85,7 @@ function deleteImageFromEditor($content)
     }
 }
 
-function deleteImageForSingle($url)
-{
-    $file_exists = Storage::disk("s3")->exists(parse_url($url)["path"]);
-    if ($file_exists) {
-        Storage::disk("s3")->delete(parse_url($url)["path"]);
-    }
-}
-
-function deleteImageFromUpdateEditor($old_content, $current_content)
+function delete_all_image_old_editor($old_content, $current_content)
 {
     libxml_use_internal_errors(true);
     
@@ -85,17 +100,17 @@ function deleteImageFromUpdateEditor($old_content, $current_content)
     foreach($old_images as $old_image)
     {
         $old_src = $old_image->getAttribute("src");
-        $check = false;
+        $old_image_exists = false;
 
         foreach($current_images as $current_image) 
         {
             $current_src = $current_image->getAttribute("src");
             if ($current_src == $old_src) {
-                $check = true;
+                $old_image_exists = true;
             }
         }
 
-        if (!$check) {
+        if (!$old_image_exists) {
             // Delete image from s3 disk
             $file_exists = Storage::disk("s3")->exists(parse_url($old_src)["path"]);
             if ($file_exists) {

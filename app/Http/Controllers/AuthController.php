@@ -22,6 +22,8 @@ class AuthController extends Controller
             $user->name = $request->name;
             $user->email = $request->email;
             $user->password = app("hash")->make($request->password);
+            $user->role = "user";
+            $user->phone = "";
             $user->save();
 
             return response()->json(["user" => $user, "message" => "CREATED"], 201);
@@ -30,10 +32,14 @@ class AuthController extends Controller
         }
     }
     
-    public function login()
+    public function login(Request $request)
     {
-        $credentials = request(["email", "password"]);
-
+        if ($request->has("role")) {
+            $credentials = request(["email", "password", "role"]);
+        } else {
+            $credentials = request(["email", "password"]);
+        }
+        
         if (! $token = Auth::attempt($credentials)) {
             return response()->json(["error" => "Unauthorized"], 401);
         }

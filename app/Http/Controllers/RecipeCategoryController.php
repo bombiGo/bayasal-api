@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Intervention\Image\ImageManagerStatic as Image;
 use Illuminate\Http\Request;
 use App\Models\RecipeCategory;
 
@@ -30,8 +31,7 @@ class RecipeCategoryController extends Controller
         $category = new RecipeCategory; 
 
         if ($request->hasFile("image")) {
-            $image_path = $request->file("image")->store("recipe-categories", "s3");
-            $category->image = Storage::disk("s3")->url($image_path);
+            $category->image = $this->get_upload_img_url("normal", $request->file("image"));
         }
 
         $category->name = $request->input("name");
@@ -61,10 +61,8 @@ class RecipeCategoryController extends Controller
         $category = RecipeCategory::findOrFail($id);
 
         if ($request->hasFile("image")) {
-            deleteImageForSingle($category->image);
-            
-            $image_path = $request->file("image")->store("recipe-categories", "s3");
-            $category->image = Storage::disk("s3")->url($image_path);
+            delete_one_image($category->image);
+            $category->image = $this->get_upload_img_url("normal", $request->file("image"));
         }
 
         $category->name = $request->input("name");
@@ -76,9 +74,40 @@ class RecipeCategoryController extends Controller
     public function destroy($id)
     {
         $category = RecipeCategory::findOrFail($id);
-        deleteImageForSingle($category->image);
+        delete_one_image($category->image);
         $category->recipes()->detach();
         $category->delete();
         return response()->json(["success" => true, "message" => "Recipe category deleted"]);
+    }
+
+    public function get_upload_img_url($thumb_type, $file_content)
+    {
+        $img = Image::make($file_content);
+        $img_name = md5(microtime(true)) . "." . $file_content->extension();
+
+        if ($thumb_type == "small") {
+            $img_small = $img->resize(null, 200, function ($constraint) {
+                $constraint->aspectRatio();
+                $constraint->upsize();
+            });
+
+            $img_small = $img_small->stream();
+            $img_path = "recipes/thumbs/small_" . $img_name;
+
+            Storage::disk("s3")->put($img_path, $img_small->__toString());
+        } else {
+            $img_normal = $img->resize(100, null, function ($constraint) {
+                $constraint->aspectRatio();
+                $constraint->upsize();
+            });
+
+            $img_normal = $img_normal->stream();
+            $img_path = "recipes/" . $img_name;
+
+            Storage::disk("s3")->put($img_path, $img_normal->__toString());
+        }
+        
+        $url = Storage::disk("s3")->url($img_path);
+        return $url;
     }
 }

@@ -42,7 +42,7 @@ class LessonController extends Controller
         }
 
         if (!empty($request->input("content")) && $request->input("mode") == "content") {
-            $data = convertBase64ToImageSrc($request->input("content"), "infos");
+            $data = convert_image_src_editor($request->input("content"), "lessons/editor");
             $content = $data->saveHTML();
         } else {
             $content = "";
@@ -92,18 +92,45 @@ class LessonController extends Controller
           
         $lesson = Lesson::findOrFail($id); 
 
-        if ($request->hasFile("pdf_url") && $request->input("mode") == "pdf") {
-            $file_path = $request->file("pdf_url")->store("lessons", "s3");
-            $lesson->pdf_url = Storage::disk("s3")->url($file_path);
-        } else {
+        if ($request->input("mode") == "vimeo") {
+            delete_one_image($lesson->pdf_url);
+            delete_all_image_editor($lesson->content);
+
             $lesson->pdf_url = "";
+            $lesson->content = "";
+            $lesson->video_id = $request->input("video_id");
         }
 
-        if (!empty($request->input("content")) && $request->input("mode") == "content") {
-            $data = convertBase64ToImageSrc($request->input("content"), "infos");
-            $content = $data->saveHTML();
-        } else {
-            $content = "";
+        if ($request->input("mode") == "pdf") {
+            delete_all_image_editor($lesson->content);
+
+            if ($request->hasFile("pdf_url")) {
+                delete_one_image($lesson->pdf_url);
+                $file_path = $request->file("pdf_url")->store("lessons", "s3");
+                $lesson->pdf_url = Storage::disk("s3")->url($file_path);    
+            }
+
+            $lesson->video_id = "";
+            $lesson->content = "";
+        }
+
+        if ($request->input("mode") == "content") {
+            delete_one_image($lesson->pdf_url);
+            if (!empty($request->input("content"))) {
+                $data = convert_image_src_editor($request->input("content"), "lessons/editor");
+                $content = $data->saveHTML();
+
+                $old_content = $lesson->content;
+                if (!empty($old_content)) {
+                    delete_all_image_old_editor($old_content, $content);    
+                }
+            } else {
+                $content = "";
+            }
+
+            $lesson->video_id = "";
+            $lesson->pdf_url = "";
+            $lesson->content = $content;
         }
 
         $lesson->title = $request->input("title");
@@ -111,8 +138,6 @@ class LessonController extends Controller
         $lesson->is_locked = $request->input("is_locked");
         $lesson->mode = $request->input("mode");
         $lesson->duration = $request->input("duration");
-        $lesson->video_id = $request->input("mode") == "vimeo" ? $request->video_id : "";
-        $lesson->content = $content;
         $lesson->save();
 
         return response()->json(["success" => true, "message" => "Lesson updated"]);
@@ -121,7 +146,9 @@ class LessonController extends Controller
     public function destroy($id)
     {
         $lesson = Lesson::findOrFail($id);
-        deleteImageForSingle($lesson->pdf_url);
+        delete_all_image_editor($lesson->content);
+        delete_one_image($lesson->pdf_url);
+
         $lesson->delete();
         
         return response()->json(["success" => true, "message" => "Lesson deleted"]);

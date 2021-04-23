@@ -15,4 +15,9 @@ class Recipe extends Model
     {
         return $this->belongsToMany(RecipeCategory::class, "recipe_has_categories", "recipe_id", "category_id");
     }
+
+    public function thumbnail()
+    {
+        return $this->morphOne(Thumbnail::class, "thumbnailable");
+    }
 }
