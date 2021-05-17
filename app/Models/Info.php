@@ -11,6 +11,11 @@ class Info extends Model
 
     protected $table = "infos";
 
+    protected $casts = [
+        "is_featured" => "integer",
+    ];
+    
+
     public function categories() 
     {
         return $this->belongsToMany(InfoCategory::class, "info_has_categories", "info_id", "category_id");

@@ -11,6 +11,12 @@ class Lesson extends Model
 
     protected $table = "lessons";
 
+    protected $casts = [
+        "day" => "integer",
+        "course_id" => "integer",
+        "is_locked" => "integer"
+    ];
+
     public function course()
     {
     	return $this->belongsTo(Course::class);

@@ -11,6 +11,12 @@ class Course extends Model
 
     protected $table = "courses";
 
+    protected $casts = [
+        "day" => "integer",
+        "price" => "double",
+        "is_paid" => "integer"
+    ];
+
     public function lessons()
     {
     	return $this->hasMany(Lesson::class, "course_id")->orderBy("day");

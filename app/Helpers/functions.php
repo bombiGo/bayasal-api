@@ -1,4 +1,5 @@
 <?php
+header('Content-type: text/html; charset=utf-8');
 
 function convert_image_src_editor($content, $folder = null) {
     $content = mb_convert_encoding($content, "HTML-ENTITIES", "UTF-8");
@@ -128,6 +129,39 @@ function str_random($length = 40) {
         $randomString .= $characters[rand(0, $charactersLength - 1)];
     }
     return $randomString;
+}
+
+function rest_call($url, $headers, $postdata = NULL) {
+    $curl = curl_init($url);
+
+    curl_setopt($curl, CURLOPT_URL, $url);
+    curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($curl, CURLOPT_HEADER, 1);
+    curl_setopt($curl, CURLOPT_FRESH_CONNECT, 1);
+    curl_setopt($curl, CURLOPT_FORBID_REUSE, 1);
+    curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($curl, CURLOPT_POST, true);
+    curl_setopt($curl, CURLOPT_POSTFIELDS, $postdata);
+    curl_setopt($curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+
+    $curl_response = curl_exec($curl);
+    $info = curl_getinfo($curl);
+    
+    if ($curl_response === false) {
+        curl_close($curl);
+        $decoded = new stdClass();
+        $decoded->http_code = 500;
+        $decoded->error = "server_response_false";
+        return $decoded;
+    }
+    
+    curl_close($curl);
+
+    $curl_response = substr($curl_response, $info['header_size']);
+    $decoded       = json_decode($curl_response, true);
+    $decoded['http_code'] = $info['http_code'];
+  
+    return $decoded;
 }
 
 ?>

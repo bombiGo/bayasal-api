@@ -4,30 +4,32 @@ $router->get("/", function () use ($router) {
     return view("index");
 });
 
-$router->get("/image", "UserController@getImage");
-
-
-
 $router->group(["prefix" => "api"], function () use ($router) {
     // Guest 
     $router->post("register", "AuthController@register");
     $router->post("login", "AuthController@login");
     
-    // $router->post("change-password", "AuthController@changePassword");
-    // $router->post("update-user", "AuthController@updateUser");
-    
-    
+    // Get all data
+    $router->get("get-data", "HelperController@getData");
+    // Course detail
+    $router->get("course-detail/{id}", "HelperController@detailCourse");
 
     $router->group(["middleware" => ["auth"]], function () use ($router) {
         // Auth 
         $router->get("me", "AuthController@me");
         $router->post("logout", "AuthController@logout");
+
+        $router->post("user/update", "AuthController@updateUser");
+        $router->post("password/change", "AuthController@changePassword");
+
+        // Orders
+        $router->post("/orders", "AuthController@createOrder");
     });
 
     // Web role middleware 
     $router->group(["middleware" => ["auth", "role"]], function () use ($router) {
         $router->get("dashboard", "HomeController@dashboard");
-
+        
         // Editor upload
         $router->post("editor/upload", "HelperController@uploadEditor");
 
